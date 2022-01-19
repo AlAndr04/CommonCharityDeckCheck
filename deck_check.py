@@ -1,5 +1,8 @@
 import requests
 import json
+import re
+
+cardRarity = "Common"
 
 def get_card_list():
     r = requests.get('https://db.ygoprodeck.com/api/v7/cardinfo.php')
@@ -18,45 +21,52 @@ def get_card_list():
     with open('data.json', 'w', encoding = 'utf8') as fp:
         json.dump(cards_reformed, fp, ensure_ascii=False)
 
-def create_common_list_files():    
+def create_rarity_list_files(cardRarity):
+    jointRarityName = cardRarity.replace(" ","")
     with open("data.json", "r", encoding='utf-8') as read_file:
         cards = json.load(read_file)
-    f = open('list_common.txt', 'wb')
+    f = open('list'+jointRarityName+'.txt', 'wb')
     commons = {}
     for card_id, card_info in cards.items():
         if "card_sets" in card_info:
             for printing in card_info["card_sets"]:
-                if printing["set_rarity"] == "Common":
+                if printing["set_rarity"] == cardRarity:
                     commons[card_id] = card_info["name"]
                     f.write((card_info["name"]+"\n").encode('utf-8'))
                     break
     f.close()
-    with open('id_to_common.json', 'w') as fp:
+    with open('idTo'+jointRarityName+'.json', 'w') as fp:
         json.dump(commons, fp)
 
-def check_deck_for_commons(deck_name):
-    is_common = True
-    not_common_cards = []
-    unavailable_cards = []
+def check_deck_for_rarity(deckName, cardRarity):
+    jointRarityName = cardRarity.replace(" ","")
+    deckJson = {}
+    deckJson["deckName"] = re.match("/?(.*?).ydk", deckName).group(1)
+    deckJson["isOfRarity"] = True
     with open("data.json", "r", encoding='utf-8') as read_file:
         cards = json.load(read_file)
-    with open("id_to_common.json", "r", encoding='utf-8') as read_file:
-        commons = json.load(read_file)
-    with open(deck_name, 'r', encoding='utf-8') as file:
+    with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
+        cardsOfRarity = json.load(read_file)
+    with open(deckName, 'r', encoding='utf-8') as file:
         deck_cards = file.read().splitlines()
     for card in deck_cards:
         if card[0]!= "#" and card[0]!= "!":
             if len(card) < 8:
                 while len(card) < 8:
                     card="0"+card
-            if card not in commons.keys():
-                is_common = False
+            if card not in cardsOfRarity.keys():
+                deckJson["isOfRarity"] = False
                 if card not in cards.keys():
-                    unavailable_cards.append(card)
-                elif len(not_common_cards) == 0 or (len(not_common_cards) > 0
-                                                  and not_common_cards[-1] != cards[card]["name"]):
-                    not_common_cards.append(cards[card]["name"])
-    if is_common:
+                    if "unavailableCards" not in deckJson.keys():
+                        deckJson["unavaiableCards"]=[card]
+                    else:
+                        deckJson["unavaiableCards"].append(card)
+                elif "notCardsOfRarity" not in deckJson.keys():
+                    deckJson["notCardsOfRarity"] = [cards[card]["name"]]
+                elif deckJson["notCardsOfRarity"][-1] != cards[card]["name"]:
+                    deckJson["notCardsOfRarity"].append(cards[card]["name"])
+    """
+    if deckJson["isCommon"]:
         result = "The deck {} is legal for common charity.\n".format(deck_name)
     else:
         result = "The deck {} is not legal for common charity\n".format(deck_name)
@@ -68,10 +78,11 @@ def check_deck_for_commons(deck_name):
         result+="The illegal cards in the deck are:\n"
         for card in not_common_cards:
             result+=card+"\n"
-    return result
+    """
+    return deckJson
 
 if __name__ == "__main__":
     #get_card_list()
-    #create_common_list_files()
-    check_deck_for_commons("RU IN FORCE.ydk")
+    #create_rarity_list_files("Common")
+    print(check_deck_for_rarity("RU IN FORCE.ydk", "Common"))
 
