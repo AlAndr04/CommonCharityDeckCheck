@@ -65,24 +65,32 @@ def check_deck_for_rarity(deckName, cardRarity):
                     deckJson["notCardsOfRarity"] = [cards[card]["name"]]
                 elif deckJson["notCardsOfRarity"][-1] != cards[card]["name"]:
                     deckJson["notCardsOfRarity"].append(cards[card]["name"])
-    """
-    if deckJson["isCommon"]:
-        result = "The deck {} is legal for common charity.\n".format(deck_name)
-    else:
-        result = "The deck {} is not legal for common charity\n".format(deck_name)
-        if len(unavailable_cards) > 0:
-            result+= ("WARNING: Some of the card ids were not found in the database.\n"
-            +"Please check that the following ids belong to cards and that the deck is not outdated:\n")
-            for card_id in unavailable_cards:
-                result+=card_id+"\n"
-        result+="The illegal cards in the deck are:\n"
-        for card in not_common_cards:
-            result+=card+"\n"
-    """
     return deckJson
+
+def get_archetypes_for_rarity(cardRarity, minCards):
+    jointRarityName = cardRarity.replace(" ","")
+    archetypes={}
+    with open("data.json", "r", encoding='utf-8') as read_file:
+        cards = json.load(read_file)
+    with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
+        cardsOfRarity = json.load(read_file)
+    print(jointRarityName)
+    for card_id, card_name in cardsOfRarity.items():
+        if "archetype" in cards[card_id]:
+            archetype = cards[card_id]["archetype"]
+            if archetype not in archetypes.keys():
+                archetypes[archetype] = [card_name]
+            else:
+                archetypes[archetype].append(card_name)
+    archetypesWithMinCards = {}
+    for archetype, cards in archetypes.items():
+        if len(cards) >= minCards:
+            archetypesWithMinCards[archetype] = cards
+    return archetypesWithMinCards
 
 if __name__ == "__main__":
     #get_card_list()
     #create_rarity_list_files("Common")
-    print(check_deck_for_rarity("RU IN FORCE.ydk", "Common"))
+    #print(check_deck_for_rarity("RU IN FORCE.ydk", "Common"))
+    print(get_archetypes_for_rarity("Common", 10))
 
