@@ -105,7 +105,7 @@ def get_archetypes_for_rarity(cardRarity, minCards):
 
 def search_cards_by_spec(cardRarity, search_json):
     jointRarityName = cardRarity.replace(" ","")
-    card_list = []
+    card_list = {}
     with open("data.json", "r", encoding='utf-8') as read_file:
         cards = json.load(read_file)
     with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
@@ -171,13 +171,13 @@ def search_cards_by_spec(cardRarity, search_json):
             match = False
         
         if match:
-            card_list.append(cards[card_id]["name"])
+            card_list[cards[card_id]["name"]] = cards[card_id]["desc"]
     return card_list
 if __name__ == "__main__":
     #get_card_list()
     #create_rarity_list_files("Common")
     #print(check_deck_for_rarity("RU IN FORCE.ydk", "Common"))
-    print(search_cards_by_spec("Ultra Rare", {"name":"Odd-Eyes", "effect":"",
+    print(search_cards_by_spec("Common", {"name":"Odd-Eyes", "effect":"",
                                           "type":"monster",
                                           "sub_type":"effect",
                                           "monster_type":"",

@@ -76,7 +76,11 @@ class CardSearchFeature:
         get_cards_button = Button(frame_search, text="Get Cards",
                                      command = self.log_get_cards)
         get_cards_button.grid(row=4, column=3, padx=10)
-
+        effect_label = Label(frame_search, text="Get Effect")
+        effect_label.grid(row=4, column=0, padx=10)
+        self.effect_dropdown = ttk.Combobox(frame_search, state="disabled", value=[""])
+        self.effect_dropdown.grid(row=5, column=0, padx=10)
+        self.effect_dropdown.bind("<<ComboboxSelected>>", self.log_get_effect)
     def show_hide_button(self, frame, prev_frame):
         if frame.winfo_ismapped():
             frame.pack_forget()
@@ -134,14 +138,23 @@ class CardSearchFeature:
                 "is_penlum":self.is_penlum.get()==1,
                 "ATK": self.atk_entry.get(),
                 "DEF": self.def_entry.get()}
-        print(spec)
-        cards_match = search_cards_by_spec(self.rarity_dropdown.get(), spec)
+        self.cards_match = search_cards_by_spec(self.rarity_dropdown.get(), spec)
         
         result = "The {} cards that match the given descriptions are:\n".format(
             self.rarity_dropdown.get())
-        for card in cards_match:
+        self.effect_dropdown.config(
+                value=list(self.cards_match.keys()),
+                state="normal")
+        for card in self.cards_match.keys():
             result+= "{}\n".format(card)
         self.log_text.config(state='normal')
         self.log_text.insert('end',result+"\n")
         self.log_text.see('end')
         self.log_text.config(state='disabled')
+    def log_get_effect(self,e):
+        card=self.effect_dropdown.get()
+        result = "The text of {} is:\n{}\n".format(card,self.cards_match[card])
+        self.log_text.config(state='normal')
+        self.log_text.insert('end',result+"\n")
+        self.log_text.see('end')
+        self.log_text.config(state='disabled')        
