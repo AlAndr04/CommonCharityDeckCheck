@@ -1,6 +1,7 @@
 import requests
 import json
 import re
+from os import path
 
 cardRarity = "Common"
 
@@ -34,23 +35,26 @@ def get_types():
         else:
             dictio[card["type"]]+=1
     return dictio
-
-def create_rarity_list_files(cardRarity):
+def create_rarity_list_files(cards, cardRarity):
     jointRarityName = cardRarity.replace(" ","")
-    with open("data.json", "r", encoding='utf-8') as read_file:
-        cards = json.load(read_file)
+    rarity = {}
     f = open('list'+jointRarityName+'.txt', 'wb')
-    commons = {}
     for card_id, card_info in cards.items():
         if "card_sets" in card_info:
             for printing in card_info["card_sets"]:
                 if printing["set_rarity"] == cardRarity:
-                    commons[card_id] = card_info["name"]
+                    rarity[card_id] = card_info["name"]
                     f.write((card_info["name"]+"\n").encode('utf-8'))
-                    break
+                    break 
     f.close()
     with open('idTo'+jointRarityName+'.json', 'w') as fp:
-        json.dump(commons, fp)
+        json.dump(rarity, fp)
+    return rarity
+def update_rarity_list_files(cardRarity):
+    jointRarityName = cardRarity.replace(" ","")
+    with open("data.json", "r", encoding='utf-8') as read_file:
+        cards = json.load(read_file) 
+    create_rarity_list_files(cards, cardRarity)
 
 def check_deck_for_rarity(deckName, cardRarity):
     jointRarityName = cardRarity.replace(" ","")
@@ -59,8 +63,11 @@ def check_deck_for_rarity(deckName, cardRarity):
     deckJson["isOfRarity"] = True
     with open("data.json", "r", encoding='utf-8') as read_file:
         cards = json.load(read_file)
-    with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
-        cardsOfRarity = json.load(read_file)
+    if not path.exists("idTo"+jointRarityName+".json"):
+        cardsOfRarity = create_rarity_list_files(cards, cardRarity)
+    else:
+        with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
+            cardsOfRarity = json.load(read_file)
     with open(deckName, 'r', encoding='utf-8') as file:
         deck_cards = file.read().splitlines()
     for card in deck_cards:
@@ -86,8 +93,11 @@ def get_archetypes_for_rarity(cardRarity, minCards):
     archetypes={}
     with open("data.json", "r", encoding='utf-8') as read_file:
         cards = json.load(read_file)
-    with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
-        cardsOfRarity = json.load(read_file)
+    if not path.exists("idTo"+jointRarityName+".json"):
+        cardsOfRarity = create_rarity_list_files(cards, cardRarity)
+    else:
+        with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
+            cardsOfRarity = json.load(read_file)
     print(jointRarityName)
     for card_id, card_name in cardsOfRarity.items():
         if "archetype" in cards[card_id]:
@@ -108,8 +118,11 @@ def search_cards_by_spec(cardRarity, search_json):
     card_list = {}
     with open("data.json", "r", encoding='utf-8') as read_file:
         cards = json.load(read_file)
-    with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
-        cardsOfRarity = json.load(read_file)
+    if not path.exists("idTo"+jointRarityName+".json"):
+        cardsOfRarity = create_rarity_list_files(cards, cardRarity)
+    else:
+        with open("idTo"+jointRarityName+".json", "r", encoding='utf-8') as read_file:
+            cardsOfRarity = json.load(read_file)
     for card_id in cardsOfRarity:
         match = True
         if (search_json["name"] != ""
@@ -175,9 +188,9 @@ def search_cards_by_spec(cardRarity, search_json):
     return card_list
 if __name__ == "__main__":
     #get_card_list()
-    #create_rarity_list_files("Common")
+    #create_rarity_list_files("Ultra Rare")
     #print(check_deck_for_rarity("RU IN FORCE.ydk", "Common"))
-    print(search_cards_by_spec("Common", {"name":"Odd-Eyes", "effect":"",
+    print(search_cards_by_spec("Secret Rare", {"name":"Odd-Eyes", "effect":"",
                                           "type":"monster",
                                           "sub_type":"effect",
                                           "monster_type":"",

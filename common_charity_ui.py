@@ -20,7 +20,7 @@ def log_update_card_list():
 
 def log_update_rarity_list():
     log_text.config(state='normal')
-    create_rarity_list_files(rarity_dropdown.get())
+    update_rarity_list_files(rarity_dropdown.get())
     log_text.insert('end',"{} card list updated.\n\n".format(rarity_dropdown.get()))
     log_text.see('end')
     log_text.config(state='disabled')
